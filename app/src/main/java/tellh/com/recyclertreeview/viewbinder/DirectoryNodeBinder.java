@@ -1,5 +1,8 @@
 package tellh.com.recyclertreeview.viewbinder;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -7,6 +10,7 @@ import android.widget.TextView;
 import tellh.com.recyclertreeview.R;
 import tellh.com.recyclertreeview.bean.Dir;
 import tellh.com.recyclertreeview_lib.TreeNode;
+import tellh.com.recyclertreeview_lib.TreeViewAdapter;
 import tellh.com.recyclertreeview_lib.TreeViewBinder;
 
 /**
@@ -16,7 +20,7 @@ import tellh.com.recyclertreeview_lib.TreeViewBinder;
 public class DirectoryNodeBinder extends TreeViewBinder<DirectoryNodeBinder.ViewHolder> {
     @Override
     public ViewHolder provideViewHolder(View itemView) {
-        return new ViewHolder(itemView);
+        return new ViewHolder(itemView, getAdapter());
     }
 
     @Override
@@ -40,11 +44,43 @@ public class DirectoryNodeBinder extends TreeViewBinder<DirectoryNodeBinder.View
     public static class ViewHolder extends TreeViewBinder.ViewHolder {
         private ImageView ivArrow;
         private TextView tvName;
+        private ImageView ivMore;
 
-        public ViewHolder(View rootView) {
-            super(rootView);
+        private static class ClickListener implements View.OnClickListener {
+            private ViewHolder vhHolder;
+            private TreeViewAdapter tvaAdapter;
+
+            public ClickListener(ViewHolder holder, TreeViewAdapter adapter) {
+                this.vhHolder = holder;
+                this.tvaAdapter = adapter;
+            }
+
+            @Override
+            public void onClick(View v) {
+                tvaAdapter.processClickEvent(vhHolder);
+            }
+        }
+
+        public ViewHolder(final View rootView, TreeViewAdapter adapter) {
+            super(rootView, adapter);
             this.ivArrow = (ImageView) rootView.findViewById(R.id.iv_arrow);
             this.tvName = (TextView) rootView.findViewById(R.id.tv_name);
+            this.ivMore = (ImageView) rootView.findViewById(R.id.iv_more);
+
+            this.ivArrow.setOnClickListener(new ClickListener(this, getAdapter()));
+            this.tvName.setOnClickListener(new ClickListener(this, getAdapter()));
+
+            this.ivMore.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(rootView.getContext());
+                    alertDialogBuilder.setMessage("\"More\" icon was clicked for folder \"" +
+                            tvName.getText() + "\".");
+                    alertDialogBuilder.setPositiveButton("OK",null);
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                }
+            });
         }
 
         public ImageView getIvArrow() {

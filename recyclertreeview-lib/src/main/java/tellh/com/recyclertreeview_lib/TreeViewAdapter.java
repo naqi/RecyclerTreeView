@@ -25,16 +25,28 @@ public class TreeViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private int padding = 30;
     private OnTreeNodeListener onTreeNodeListener;
     private boolean toCollapseChild;
+    private boolean enableClickListener;
 
     public TreeViewAdapter(List<? extends TreeViewBinder> viewBinders) {
         this(null, viewBinders);
     }
 
     public TreeViewAdapter(List<TreeNode> nodes, List<? extends TreeViewBinder> viewBinders) {
+        this(nodes, viewBinders, true);
+    }
+
+    public TreeViewAdapter(List<TreeNode> nodes, List<? extends TreeViewBinder> viewBinders,
+                           boolean enableClickListener) {
         displayNodes = new ArrayList<>();
         if (nodes != null)
             findDisplayNodes(nodes);
         this.viewBinders = viewBinders;
+
+        this.enableClickListener = enableClickListener;
+
+        for (TreeViewBinder viewBinder : viewBinders) {
+            viewBinder.setAdapter(this);
+        }
     }
 
     /**
@@ -84,38 +96,46 @@ public class TreeViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         super.onBindViewHolder(holder, position, payloads);
     }
 
+    public void processClickEvent(final RecyclerView.ViewHolder holder) {
+        TreeNode selectedNode = displayNodes.get(holder.getLayoutPosition());
+        // Prevent multi-click during the short interval.
+        try {
+            long lastClickTime = (long) holder.itemView.getTag();
+            if (System.currentTimeMillis() - lastClickTime < 500)
+                return;
+        } catch (Exception e) {
+            holder.itemView.setTag(System.currentTimeMillis());
+        }
+        holder.itemView.setTag(System.currentTimeMillis());
+
+        if (onTreeNodeListener != null && onTreeNodeListener.onClick(selectedNode, holder))
+            return;
+        if (selectedNode.isLeaf())
+            return;
+        // This TreeNode was locked to click.
+        if (selectedNode.isLocked()) return;
+        boolean isExpand = selectedNode.isExpand();
+        int positionStart = displayNodes.indexOf(selectedNode) + 1;
+        if (!isExpand) {
+            notifyItemRangeInserted(positionStart, addChildNodes(selectedNode, positionStart));
+        } else {
+            notifyItemRangeRemoved(positionStart, removeChildNodes(selectedNode, true));
+        }
+    }
+
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         holder.itemView.setPadding(displayNodes.get(position).getHeight() * padding, 3, 3, 3);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                TreeNode selectedNode = displayNodes.get(holder.getLayoutPosition());
-                // Prevent multi-click during the short interval.
-                try {
-                    long lastClickTime = (long) holder.itemView.getTag();
-                    if (System.currentTimeMillis() - lastClickTime < 500)
-                        return;
-                } catch (Exception e) {
-                    holder.itemView.setTag(System.currentTimeMillis());
-                }
-                holder.itemView.setTag(System.currentTimeMillis());
 
-                if (onTreeNodeListener != null && onTreeNodeListener.onClick(selectedNode, holder))
-                    return;
-                if (selectedNode.isLeaf())
-                    return;
-                // This TreeNode was locked to click.
-                if (selectedNode.isLocked()) return;
-                boolean isExpand = selectedNode.isExpand();
-                int positionStart = displayNodes.indexOf(selectedNode) + 1;
-                if (!isExpand) {
-                    notifyItemRangeInserted(positionStart, addChildNodes(selectedNode, positionStart));
-                } else {
-                    notifyItemRangeRemoved(positionStart, removeChildNodes(selectedNode, true));
+        if (this.enableClickListener) {
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    processClickEvent(holder);
                 }
-            }
-        });
+            });
+        }
+
         for (TreeViewBinder viewBinder : viewBinders) {
             if (viewBinder.getLayoutId() == displayNodes.get(position).getContent().getLayoutId())
                 viewBinder.bindView(holder, position, displayNodes.get(position));

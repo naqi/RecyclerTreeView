@@ -6,6 +6,7 @@ import android.widget.TextView;
 import tellh.com.recyclertreeview.R;
 import tellh.com.recyclertreeview.bean.File;
 import tellh.com.recyclertreeview_lib.TreeNode;
+import tellh.com.recyclertreeview_lib.TreeViewAdapter;
 import tellh.com.recyclertreeview_lib.TreeViewBinder;
 
 /**
@@ -15,7 +16,7 @@ import tellh.com.recyclertreeview_lib.TreeViewBinder;
 public class FileNodeBinder extends TreeViewBinder<FileNodeBinder.ViewHolder> {
     @Override
     public ViewHolder provideViewHolder(View itemView) {
-        return new ViewHolder(itemView);
+        return new ViewHolder(itemView, getAdapter());
     }
 
     @Override
@@ -32,8 +33,8 @@ public class FileNodeBinder extends TreeViewBinder<FileNodeBinder.ViewHolder> {
     public class ViewHolder extends TreeViewBinder.ViewHolder {
         public TextView tvName;
 
-        public ViewHolder(View rootView) {
-            super(rootView);
+        public ViewHolder(View rootView, TreeViewAdapter adapter) {
+            super(rootView, adapter);
             this.tvName = (TextView) rootView.findViewById(R.id.tv_name);
         }
 
