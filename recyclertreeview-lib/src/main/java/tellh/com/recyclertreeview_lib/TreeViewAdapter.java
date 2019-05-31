@@ -15,26 +15,35 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static android.util.TypedValue.COMPLEX_UNIT_DIP;
+import static android.util.TypedValue.applyDimension;
+
 /**
  * Created by tlh on 2016/10/1 :)
  */
 public class TreeViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String KEY_IS_EXPAND = "IS_EXPAND";
     private final List<? extends TreeViewBinder> viewBinders;
+
+
+    private int contentViewID;
+    private int expandCollapaseItemID;
     private List<TreeNode> displayNodes;
-    private int padding = 30;
+    private int padding = 16;
     private OnTreeNodeListener onTreeNodeListener;
     private boolean toCollapseChild;
 
-    public TreeViewAdapter(List<? extends TreeViewBinder> viewBinders) {
-        this(null, viewBinders);
+    public TreeViewAdapter(List<? extends TreeViewBinder> viewBinders, int expandCollapseItemID, int contentViewID) {
+        this(null, viewBinders, expandCollapseItemID, contentViewID);
     }
 
-    public TreeViewAdapter(List<TreeNode> nodes, List<? extends TreeViewBinder> viewBinders) {
+    public TreeViewAdapter(List<TreeNode> nodes, List<? extends TreeViewBinder> viewBinders, int expandCollapseItemID, int contentViewID) {
         displayNodes = new ArrayList<>();
         if (nodes != null)
             findDisplayNodes(nodes);
         this.viewBinders = viewBinders;
+        this.expandCollapaseItemID = expandCollapseItemID;
+        this.contentViewID = contentViewID;
     }
 
     /**
@@ -86,8 +95,14 @@ public class TreeViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
-        holder.itemView.setPadding(displayNodes.get(position).getHeight() * padding, 3, 3, 3);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
+        int paddingLeft = displayNodes.get(position).getHeight() * (int) applyDimension(COMPLEX_UNIT_DIP, padding, holder.itemView.getContext().getResources().getDisplayMetrics());
+
+        View contentView = holder.itemView.findViewById(contentViewID);
+        contentView.setPadding(paddingLeft, 4, 8, 4);
+
+        View onClickItem = holder.itemView.findViewById(expandCollapaseItemID);
+
+        onClickItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 TreeNode selectedNode = displayNodes.get(holder.getLayoutPosition());
@@ -116,9 +131,11 @@ public class TreeViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 }
             }
         });
+
         for (TreeViewBinder viewBinder : viewBinders) {
-            if (viewBinder.getLayoutId() == displayNodes.get(position).getContent().getLayoutId())
+            if (viewBinder.getLayoutId() == displayNodes.get(position).getContent().getLayoutId()) {
                 viewBinder.bindView(holder, position, displayNodes.get(position));
+            }
         }
     }
 
