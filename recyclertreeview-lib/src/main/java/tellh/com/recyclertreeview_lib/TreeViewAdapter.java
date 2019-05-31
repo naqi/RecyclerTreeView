@@ -97,8 +97,10 @@ public class TreeViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         int paddingLeft = displayNodes.get(position).getHeight() * (int) applyDimension(COMPLEX_UNIT_DIP, padding, holder.itemView.getContext().getResources().getDisplayMetrics());
 
+        int fourDPI = (int) applyDimension(COMPLEX_UNIT_DIP, 4, holder.itemView.getContext().getResources().getDisplayMetrics());
+
         View contentView = holder.itemView.findViewById(contentViewID);
-        contentView.setPadding(paddingLeft, 4, 8, 4);
+        contentView.setPadding(paddingLeft, fourDPI, 0, fourDPI);
 
         View onClickItem = holder.itemView.findViewById(expandCollapaseItemID);
 
